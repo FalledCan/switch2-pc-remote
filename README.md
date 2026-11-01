@@ -92,3 +92,6 @@ python -m switch_remote [--ip IP] [--port 80] [--pin 1234 | --no-pin]
 - `switch_remote/input_win.py` — Win32 SendInput によるマウス・キーボード注入
 - `switch_remote/dns_server.py` — 接続テストを誘導する最小 DNS サーバー
 - `switch_remote/web/` — Switch のブラウザで動くクライアント（ES5 / タッチ・コントローラー対応）
+
+## ライセンス
+[MIT License](LICENSE)
