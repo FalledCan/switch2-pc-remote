@@ -1,0 +1,69 @@
+html, body {
+  margin: 0; padding: 0; height: 100%; overflow: hidden;
+  background: #000; color: #eee;
+  font-family: sans-serif; font-size: 16px;
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none; -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+#stage { position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; touch-action: none; }
+#screen { position: absolute; left: 0; top: 0; -webkit-user-drag: none; pointer-events: none; }
+#status {
+  position: absolute; left: 50%; top: 50%; -webkit-transform: translate(-50%, -50%); transform: translate(-50%, -50%);
+  background: rgba(0,0,0,.7); padding: 12px 20px; border-radius: 8px;
+}
+button, select, input {
+  font-size: 16px; color: #fff; background: #333; border: 1px solid #555; border-radius: 6px;
+  padding: 8px 12px; margin: 2px;
+}
+button.on { background: #e60012; border-color: #ff4a57; }
+#bar {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 4px; white-space: nowrap; overflow-x: auto;
+  background: rgba(20,20,20,.85); text-align: center;
+}
+#bar button.icon { min-width: 44px; }
+#showBar { position: absolute; right: 6px; bottom: 6px; opacity: .6; display: none; }
+.panel { position: absolute; background: rgba(25,25,25,.96); border: 1px solid #444; border-radius: 10px; padding: 10px; }
+#kbdPanel { left: 8px; right: 8px; top: 8px; }
+#kbdForm { display: -webkit-flex; display: flex; }
+#kbdInput { -webkit-flex: 1; flex: 1; min-width: 0; background: #111; }
+#menuPanel { left: 5%; right: 5%; top: 4%; bottom: 70px; overflow-y: auto; }
+#menuPanel h3 { margin: 6px 0; font-size: 16px; color: #aaa; }
+.grid button { width: 15.5%; min-width: 110px; }
+.row label { display: inline-block; margin: 4px 12px 4px 0; }
+.help { font-size: 13px; color: #aaa; line-height: 1.6; }
+.hidden { display: none !important; }
+#hud {
+  position: absolute; left: 4px; top: 4px; font: 12px monospace; color: #7f7;
+  background: rgba(0,0,0,.55); padding: 2px 6px; border-radius: 4px; pointer-events: none;
+}
+#game { position: absolute; left: 0; top: 0; right: 0; bottom: 0; touch-action: none; }
+#stick {
+  position: absolute; left: 24px; bottom: 80px; width: 170px; height: 170px; border-radius: 50%;
+  background: rgba(255,255,255,.10); border: 2px solid rgba(255,255,255,.35);
+}
+#knob {
+  position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px;
+  border-radius: 50%; background: rgba(255,255,255,.45);
+}
+#gbtns { position: absolute; right: 12px; bottom: 70px; width: 330px; text-align: right; }
+.gbtn {
+  display: inline-block; width: 74px; height: 54px; line-height: 54px; margin: 4px; text-align: center;
+  border-radius: 12px; background: rgba(255,255,255,.14); border: 2px solid rgba(255,255,255,.35);
+  font-size: 14px; color: #fff;
+}
+.gbtn.on { background: rgba(230,0,18,.7); }
+#game.padmode #stick, #game.padmode #gbtns { display: none; }
+#touchPad { display: none; position: absolute; right: 8px; top: 30px; }
+#game.padmode #touchPad { display: block; }
+.tbtn {
+  display: inline-block; width: 48px; height: 40px; line-height: 40px; margin-left: 6px; text-align: center;
+  border-radius: 10px; background: rgba(255,255,255,.14); border: 2px solid rgba(255,255,255,.35); color: #fff;
+}
+.tbtn.on { background: rgba(230,0,18,.7); }
+#padInfo {
+  position: absolute; right: 6px; top: 4px; font-size: 12px; color: #fc6;
+  background: rgba(0,0,0,.55); padding: 2px 6px; border-radius: 4px; pointer-events: none;
+}
+#login { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: #111; text-align: center; padding-top: 12%; }
+#login input { font-size: 28px; width: 200px; text-align: center; letter-spacing: 6px; background: #222; }
+#loginErr { color: #ff6b6b; }

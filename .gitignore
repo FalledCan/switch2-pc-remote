@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+# Switch のブラウザ診断結果（環境固有）
+diag_result.json

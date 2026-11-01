@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Switch Remote</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="stage">
+  <img id="screen" alt="">
+  <div id="status">接続中…</div>
+  <div id="hud"></div>
+</div>
+
+<div id="game" class="hidden">
+  <div id="stick"><div id="knob"></div></div>
+  <div id="gbtns"></div>
+  <div id="padInfo"></div>
+  <div id="touchPad">
+    <div class="tbtn" data-bit="3">X</div>
+    <div class="tbtn" data-bit="8">−</div>
+    <div class="tbtn" data-bit="9">＋</div>
+  </div>
+</div>
+
+<div id="bar">
+  <button data-act="menu" class="icon" title="メニュー">☰</button>
+  <button data-act="game" id="gameBtn">🎮 ゲーム</button>
+  <button data-act="mode" id="modeBtn">直接タッチ</button>
+  <button data-act="kbd">⌨ 文字入力</button>
+  <button data-key="esc">Esc</button>
+  <button data-key="tab">Tab</button>
+  <button data-key="enter">Enter</button>
+  <button data-key="backspace">BS</button>
+  <button data-key="win">Win</button>
+  <button data-act="rclick" id="rclickBtn">右クリック</button>
+  <button data-act="drag" id="dragBtn">ドラッグ固定</button>
+  <button data-act="zoom" id="zoomBtn">ズーム 1x</button>
+  <button data-act="hide" class="icon" title="バーを隠す">▼</button>
+</div>
+<button id="showBar" data-act="hide">▲</button>
+
+<div id="kbdPanel" class="panel hidden">
+  <form id="kbdForm">
+    <input id="kbdInput" type="text" autocomplete="off" autocapitalize="off" placeholder="ここに入力して送信（日本語可）">
+    <button type="submit">送信</button>
+    <button type="button" id="kbdEnter">送信+Enter</button>
+    <button type="button" data-act="kbd">閉じる</button>
+  </form>
+</div>
+
+<div id="menuPanel" class="panel hidden">
+  <h3>ショートカット</h3>
+  <div class="grid">
+    <button data-key="ctrl+c">コピー</button>
+    <button data-key="ctrl+v">貼り付け</button>
+    <button data-key="ctrl+x">切り取り</button>
+    <button data-key="ctrl+z">元に戻す</button>
+    <button data-key="ctrl+a">全選択</button>
+    <button data-key="ctrl+s">保存</button>
+    <button data-key="alt+tab">Alt+Tab</button>
+    <button data-key="alt+f4">Alt+F4</button>
+    <button data-key="win+d">デスクトップ</button>
+    <button data-key="win+e">エクスプローラー</button>
+    <button data-key="ctrl+shift+esc">タスクマネージャー</button>
+    <button data-key="win+l">ロック</button>
+    <button data-key="f5">F5</button>
+    <button data-key="f11">F11</button>
+    <button data-key="zenkaku">半角/全角</button>
+    <button data-key="delete">Delete</button>
+    <button data-key="up">↑</button>
+    <button data-key="down">↓</button>
+    <button data-key="left">←</button>
+    <button data-key="right">→</button>
+    <button data-key="home">Home</button>
+    <button data-key="end">End</button>
+    <button data-key="pageup">PgUp</button>
+    <button data-key="pagedown">PgDn</button>
+    <button data-key="space">Space</button>
+    <button data-key="mediaplay">再生/停止</button>
+    <button data-key="volumedown">音量−</button>
+    <button data-key="volumeup">音量＋</button>
+    <button data-key="volumemute">ミュート</button>
+    <button data-act="mclick">中クリック</button>
+  </div>
+  <h3>画質・表示</h3>
+  <div class="row">
+    <label>解像度
+      <select id="optWidth">
+        <option value="854">480p（軽い）</option>
+        <option value="1280" selected>720p</option>
+        <option value="1600">900p</option>
+        <option value="1920">1080p（高画質）</option>
+      </select>
+    </label>
+    <label>画質
+      <select id="optQuality">
+        <option value="35">低</option>
+        <option value="55" selected>中</option>
+        <option value="75">高</option>
+        <option value="90">最高</option>
+      </select>
+    </label>
+    <label>モニター <select id="optMonitor"></select></label>
+    <label>最大fps
+      <select id="optFps">
+        <option value="30">30</option>
+        <option value="45">45</option>
+        <option value="60" selected>60</option>
+      </select>
+    </label>
+    <label>転送方式
+      <select id="optTransport">
+        <option value="ws" selected>WebSocket（低遅延）</option>
+        <option value="poll">ポーリング（互換）</option>
+        <option value="mjpeg">MJPEG</option>
+      </select>
+    </label>
+    <label>遅延表示
+      <select id="optHud"><option value="on">表示</option><option value="off">非表示</option></select>
+    </label>
+    <label>トラックパッド速度
+      <select id="optSpeed">
+        <option value="1">1x</option>
+        <option value="2" selected>2x</option>
+        <option value="3">3x</option>
+        <option value="4">4x</option>
+      </select>
+    </label>
+  </div>
+  <h3>ゲームモード</h3>
+  <div class="row">
+    <label>スティック
+      <select id="optStick"><option value="wasd">WASD</option><option value="arrows">矢印キー</option></select>
+    </label>
+    <label>視点感度
+      <select id="optLook">
+        <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
+        <option value="5">5</option><option value="8">8</option>
+      </select>
+    </label>
+    <label>コントローラー
+      <select id="optPad">
+        <option value="xbox">仮想Xboxコントローラー</option>
+        <option value="keys">キー割り当て</option>
+      </select>
+    </label>
+    <label>ボタン配置
+      <select id="optLayout">
+        <option value="label">刻印どおり（A→A）</option>
+        <option value="position">位置どおり（下→A）</option>
+      </select>
+    </label>
+    <label>Xボタンの代わり
+      <select id="optXalt">
+        <option value="minus">−ボタン</option>
+        <option value="ls">Lスティック押し込み</option>
+        <option value="rs">Rスティック押し込み</option>
+        <option value="none">使わない</option>
+      </select>
+    </label>
+    <label>ボタン（カンマ区切り）
+      <input id="optGameKeys" type="text" size="34" autocomplete="off">
+    </label>
+  </div>
+  <p class="help">
+    <b>ゲームモード</b>: 左下スティック=移動キー / ボタン=押している間キーを押下 / 画面をなぞる=視点（マウス相対移動） / タップ=左クリック。
+    コントローラー（仮想Xbox）: Joy-Con をそのまま PC の Xbox コントローラーとして使えます（PC に ViGEmBus が必要）。<br>
+    コントローラー（キー割り当て）: Lスティック=移動 / Rスティック=視点 / ZR=左クリック / ZL=右クリック / A・B・X・Y=ボタン欄の1〜4番目 / L・R=5・6番目 / 十字キー=7〜10番目<br>
+  </p>
+  <p class="help">
+    <b>直接タッチ</b>: タップ=クリック / 長押し=右クリック / 1本指ドラッグ=ドラッグ / 2本指ドラッグ=スクロール / 2本指タップ=右クリック<br>
+    <b>トラックパッド</b>: 1本指でカーソル移動 / タップ=クリック / 2本指ドラッグ=スクロール / 2本指タップ=右クリック<br>
+    <b>コントローラー</b>（ブラウザが対応している場合）: Lスティック=カーソル / Rスティック=スクロール / A=クリック / B=右クリック<br>
+    <span id="fpsInfo"></span>
+  </p>
+  <button data-act="menu">閉じる</button>
+  <a href="/diag" style="color:#8cf; margin-left: 12px">ブラウザ診断</a>
+</div>
+
+<div id="login" class="hidden">
+  <form id="loginForm">
+    <h2>Switch Remote</h2>
+    <p>PC に表示されている PIN を入力してください</p>
+    <input id="pinInput" type="tel" inputmode="numeric" maxlength="12" autocomplete="off">
+    <button type="submit">接続</button>
+    <p id="loginErr"></p>
+    <p><a href="/diag" style="color:#8cf">ブラウザ診断（遅延改善用）</a></p>
+  </form>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

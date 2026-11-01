@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>ブラウザ診断</title>
+<style>
+  body { background: #111; color: #eee; font-family: sans-serif; margin: 16px; }
+  #log { font: 13px monospace; white-space: pre-wrap; background: #000; padding: 8px; height: 45vh; overflow-y: auto; }
+  button { font-size: 18px; padding: 10px 18px; background: #333; color: #fff; border: 1px solid #666; border-radius: 6px; }
+  #pad { margin: 8px 0; padding: 30px; background: #222; border: 2px dashed #555; text-align: center; }
+</style>
+</head>
+<body>
+<h2>Switch Remote ブラウザ診断</h2>
+<p>自動で機能を調べ、速度を測ります。終わったら下の枠の中をタッチし、Joy-Con のボタン・スティックを色々押してから「送信」を押してください。</p>
+<div id="pad">ここをタッチ・コントローラー操作（入力は記録されるだけで PC は操作しません）</div>
+<button id="sendBtn">送信</button> <span id="state">測定中…</span>
+<div id="log"></div>
+<img id="im" style="display:none" alt="">
+<script>
+(function () {
+  var R = { ua: navigator.userAgent, events: [], tests: {} };
+  var logEl = document.getElementById('log');
+  function log(s) { logEl.textContent += s + '\n'; logEl.scrollTop = 1e9; }
+  function test(name, fn) {
+    var v;
+    try { v = fn(); } catch (e) { v = 'error: ' + e; }
+    R.tests[name] = v;
+    log(name + ': ' + JSON.stringify(v));
+  }
+  var V = document.createElement('video');
+  test('screen', function () { return [screen.width, screen.height, window.innerWidth, window.innerHeight, window.devicePixelRatio]; });
+  test('maxTouchPoints', function () { return navigator.maxTouchPoints; });
+  test('ontouchstart', function () { return 'ontouchstart' in window; });
+  test('WebSocket', function () { return typeof WebSocket; });
+  test('ArrayBuffer/DataView', function () { return typeof ArrayBuffer + '/' + typeof DataView; });
+  test('Blob+createObjectURL', function () { return typeof Blob + '/' + typeof (window.URL || window.webkitURL).createObjectURL; });
+  test('createImageBitmap', function () { return typeof window.createImageBitmap; });
+  test('WebGL', function () { var c = document.createElement('canvas'); return !!(c.getContext('webgl') || c.getContext('experimental-webgl')); });
+  test('WebAssembly', function () { return typeof WebAssembly; });
+  test('Worker', function () { return typeof Worker; });
+  test('MediaSource', function () { return typeof (window.MediaSource || window.WebKitMediaSource); });
+  test('MSE h264', function () {
+    var M = window.MediaSource || window.WebKitMediaSource;
+    return M ? [M.isTypeSupported('video/mp4; codecs="avc1.42E01E"'), M.isTypeSupported('video/mp4; codecs="avc1.640028"')] : null;
+  });
+  test('video mp4 h264', function () { return V.canPlayType('video/mp4; codecs="avc1.42E01E"'); });
+  test('video webm vp8', function () { return V.canPlayType('video/webm; codecs="vp8"'); });
+  test('RTCPeerConnection', function () { return typeof (window.RTCPeerConnection || window.webkitRTCPeerConnection); });
+  test('VideoDecoder', function () { return typeof window.VideoDecoder; });
+  test('AudioContext', function () { return typeof (window.AudioContext || window.webkitAudioContext); });
+  test('getGamepads', function () { return typeof navigator.getGamepads; });
+  test('pointerLock', function () { return typeof document.body.requestPointerLock; });
+  test('fullscreen', function () { return typeof (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen); });
+  test('localStorage', function () { localStorage.setItem('x', '1'); return localStorage.getItem('x') === '1'; });
+
+  // requestAnimationFrame の実測フレームレート
+  var raf = window.requestAnimationFrame || window.webkitRequestAnimationFrame;
+  if (raf) {
+    var n = 0, t0 = Date.now();
+    (function step() { n++; if (Date.now() - t0 < 1000) raf(step); else { R.tests.rafFps = n; log('rafFps: ' + n); } })();
+  }
+
+  // WebSocket の往復時間（認証不要の echo は無いので /ws への接続可否だけ確認）
+  try {
+    var w = new WebSocket('ws://' + location.host + '/ws');
+    w.onopen = function () { R.tests.wsConnect = 'open'; log('wsConnect: open'); w.close(); };
+    w.onerror = function () { R.tests.wsConnect = 'error(認証前なので想定内の場合あり)'; log('wsConnect: error'); };
+  } catch (e) { R.tests.wsConnect = 'exception ' + e; }
+
+  // HTTP 往復と JPEG 表示速度（/static の小さいファイル・診断用画像）
+  function rtt(i, acc) {
+    if (i >= 10) { acc.sort(function (a, b) { return a - b; }); R.tests.httpRttMs = acc; log('httpRttMs: ' + acc.join(',')); jpegTest(); return; }
+    var x = new XMLHttpRequest(), s = Date.now();
+    x.open('GET', '/api/info?_=' + s, true);
+    x.onreadystatechange = function () { if (x.readyState === 4) { acc.push(Date.now() - s); rtt(i + 1, acc); } };
+    x.send();
+  }
+  function jpegTest() {
+    var im = document.getElementById('im'), times = [], i = 0;
+    function next() {
+      if (i >= 8) { R.tests.jpegLoadMs = times; log('jpegLoadMs(720p相当,取得+表示): ' + times.join(',')); done(); return; }
+      var s = Date.now();
+      im.onload = function () { times.push(Date.now() - s); i++; next(); };
+      im.onerror = function () { times.push(-1); i++; next(); };
+      im.src = '/static/diag.jpg?_=' + s + i;
+    }
+    next();
+  }
+  function done() { document.getElementById('state').textContent = '測定完了。入力テスト後に送信してください'; }
+  rtt(0, []);
+
+  // 入力イベントの記録（Joy-Con が何として届くか調べる）
+  function rec(e) {
+    var o = { type: e.type, t: Date.now() % 100000 };
+    if (e.key !== undefined) { o.key = e.key; o.code = e.code; o.keyCode = e.keyCode; }
+    if (e.button !== undefined) o.button = e.button;
+    if (e.touches) o.touches = e.touches.length;
+    if (e.deltaY !== undefined) o.dy = e.deltaY;
+    if (e.clientX !== undefined) { o.x = e.clientX; o.y = e.clientY; }
+    if (R.events.length < 300) R.events.push(o);
+    if (e.type !== 'mousemove' && e.type !== 'touchmove' && e.type !== 'pointermove') log('event ' + JSON.stringify(o));
+  }
+  ['keydown', 'keyup', 'mousedown', 'mouseup', 'mousemove', 'wheel', 'touchstart', 'touchmove', 'touchend',
+   'pointerdown', 'pointermove', 'contextmenu'].forEach(function (t) {
+    document.addEventListener(t, function (e) {
+      rec(e);
+      if (t !== 'mousemove' && t !== 'pointermove' && e.target && e.target.id === 'pad') e.preventDefault();
+    }, { passive: false });
+  });
+  window.addEventListener('gamepadconnected', function (e) { log('gamepadconnected ' + e.gamepad.id); R.events.push({ type: 'gamepadconnected', id: e.gamepad.id }); });
+  var padSeen = {};
+  setInterval(function () {
+    if (!navigator.getGamepads) return;
+    var ps = navigator.getGamepads();
+    for (var i = 0; i < ps.length; i++) {
+      var p = ps[i];
+      if (!p) continue;
+      var b = [];
+      for (var j = 0; j < p.buttons.length; j++) if (p.buttons[j].pressed) b.push(j);
+      var s = p.id + ' map=' + p.mapping + ' btn=' + b.join('+') + ' axes=' + p.axes.map(function (a) { return a.toFixed(1); }).join(',');
+      if (padSeen[i] !== s) { padSeen[i] = s; log('pad' + i + ' ' + s); if (R.events.length < 300) R.events.push({ type: 'pad', s: s }); }
+    }
+  }, 50);
+
+  document.getElementById('sendBtn').onclick = function () {
+    var x = new XMLHttpRequest();
+    x.open('POST', '/api/diag', true);
+    x.setRequestHeader('Content-Type', 'application/json');
+    x.onreadystatechange = function () {
+      if (x.readyState === 4) document.getElementById('state').textContent = x.status === 200 ? '送信しました。ありがとうございます！' : '送信失敗 ' + x.status;
+    };
+    x.send(JSON.stringify(R));
+  };
+})();
+</script>
+</body>
+</html>
